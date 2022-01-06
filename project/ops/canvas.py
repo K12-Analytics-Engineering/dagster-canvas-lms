@@ -209,14 +209,14 @@ def get_sections(context, course_id: int) -> List:
     retry_policy=RetryPolicy(max_retries=3, delay=10),
     tags={"kind": "extract"}
 )
-def get_submissions(context, assignments: List[Dict]) -> List:
+def get_submissions(context, assignments: Dict) -> List:
     """
     Loop through all assignments in a course,
     fetching their submissions, and return
     a list containing all submissions for that course.
 
     Args:
-        assignments List[Dict]:
+        assignments Dict:
             assignments is a list of the assignments fetched for
             each Canvas course. Each list item is a dict
             containing a value key that holds the actual
@@ -228,18 +228,19 @@ def get_submissions(context, assignments: List[Dict]) -> List:
                 "value": List of records}]
     """
     records = list()
-    for assignment_list in assignments:
-        course_id = assignment_list["course_id"]
-        for assignment in assignment_list["value"]:
-            if assignment["is_quiz_assignment"] is True:
-                assignment_type = "quiz"
-            else:
-                assignment_type = "assignment"
-        
+    course_id = assignments["course_id"]
+    for assignment in assignments["value"]:
+        if assignment["is_quiz_assignment"] is True:
+            records = records + context.resources.canvas_api_client.get_submissions(
+                course_id=course_id,
+                assignment_id=str(assignment["quiz_id"]),
+                assignment_type="quiz"
+            )
+        else:
             records = records + context.resources.canvas_api_client.get_submissions(
                 course_id=course_id,
                 assignment_id=str(assignment["id"]),
-                assignment_type=assignment_type
+                assignment_type="assignment"
             )
 
     yield Output(
