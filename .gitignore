@@ -7,6 +7,7 @@ history/
 logs/
 schedules/
 storage/
+.DS_Store
 
 target/
 dbt_modules/
