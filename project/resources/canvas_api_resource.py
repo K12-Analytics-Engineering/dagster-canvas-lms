@@ -17,7 +17,7 @@ class CanvasApiClient:
 
 
     @retry(wait=wait_exponential(multiplier=1, min=4, max=10))
-    def _call_api(self, url) -> Dict:
+    def _call_api(self, url):
         """
         Call GET on passed in URL and
         return response.
@@ -37,20 +37,52 @@ class CanvasApiClient:
             else:
                 raise err
         
-        return response.json()
+        return response
+
+
+    def get_courses(self, term_id: int) -> List:
+        """
+        Get courses data from Canvas API
+        and return JSON
+        """
+        endpoint_url = (
+            f"{self.api_base_url}"
+            f"/api/v1/accounts/{self.account_id}/courses"
+            "?page=1&per_page=100"
+            f"&with_enrollments=true&published=true&enrollment_term_id={term_id}"
+            "&include[]=term"
+            "&include[]=total_students"
+            "&include[]=teachers"
+        )
+        done = False
+        records = list()
+        while not done:
+            response = self._call_api(endpoint_url)
+            self.log.info(f"Retrieved {len(response.json())} records")
+            records = records + response.json()
+
+            self.log.debug(response.links)
+            if "next" in response.links and response.links["current"]["url"] != response.links["next"]["url"]:
+                endpoint_url = response.links["next"]["url"]
+            elif "last" in response.links and response.links["current"]["url"] != response.links["last"]["url"]:
+                endpoint_url = response.links["last"]["url"]
+            else:
+                done = True
+        
+        return records
 
 
     def get_terms(self) -> List:
         """
         Get terms data from Canvas API
-        and return JSON data
+        and return JSON
         """
         endpoint_url = (
             f"{self.api_base_url}"
             f"/api/v1/accounts/{self.account_id}/terms?page=1&per_page=100"
         )
         response = self._call_api(endpoint_url)
-        terms = response["enrollment_terms"]
+        terms = response.json()["enrollment_terms"]
         self.log.info(f"Retrieved {len(terms)} records")
         return terms
 

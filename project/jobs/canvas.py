@@ -4,7 +4,7 @@ from dagster import fs_io_manager, graph, multiprocess_executor
 from dagster_dbt import dbt_cli_resource
 from dagster_gcp.gcs.io_manager import gcs_pickle_io_manager
 from dagster_gcp.gcs.resources import gcs_resource
-from ops.canvas import create_warehouse_tables, get_terms, load_extract
+from ops.canvas import create_warehouse_tables, get_terms, load_data, term_id_generator, get_courses
 from resources.bq_resource import bq_client
 from resources.canvas_api_resource import canvas_api_resource_client
 from resources.gcs_resource import gcs_client
@@ -23,9 +23,10 @@ def canvas():
     warehouse_tables_result = create_warehouse_tables()
 
     terms = get_terms()
-    terms_gcs_path = load_extract.alias("load_terms")(terms)
+    terms_gcs_path = load_data.alias("load_terms")(terms)
 
-
+    courses = term_id_generator(terms).map(get_courses).collect()
+    courses_gcs_path = load_data.alias("load_courses")(courses)
 
 
 canvas_dev_job = canvas.to_job(
@@ -52,5 +53,10 @@ canvas_dev_job = canvas.to_job(
             "profiles_dir": os.getenv('DBT_PROFILES_DIR'),
             "target": "dev"
         })
-    }
+    },
+    config={"ops": {
+        "term_id_generator": {
+            "config": {"school_year_start_date": os.getenv('SCHOOL_YEAR_START_DATE')}
+        }
+    }}
 )
