@@ -8,6 +8,20 @@ from google.cloud import bigquery
 
 
 @op(
+    description="Yields dynamic outputs containing each course id",
+    out=DynamicOut(int)
+)
+def course_id_generator(context, courses: List[Dict]) -> List:
+    for course_list in courses:
+        for course in course_list["value"]:
+            id = course["id"]
+            yield DynamicOutput(
+                value=id,
+                mapping_key=str(id)
+            )
+
+
+@op(
     description="Create tables in BigQuery to query data lake",
     required_resource_keys={"file_manager", "warehouse"},
     retry_policy=RetryPolicy(max_retries=3, delay=30),
@@ -24,6 +38,7 @@ def create_warehouse_tables(context):
         bigquery.SchemaField("data", "STRING", "NULLABLE")
     ]
     tables = [
+        {"folder_name": "assignments", "table_name": "canvas_assignments"},
         {"folder_name": "courses", "table_name": "canvas_courses"},
         {"folder_name": "terms", "table_name": "canvas_terms"}
     ]
@@ -37,6 +52,25 @@ def create_warehouse_tables(context):
         )
 
     return "Created data warehouse tables"
+
+
+@op(
+    description="Retrieves all assignments for a specific course",
+    required_resource_keys={"canvas_api_client"},
+    retry_policy=RetryPolicy(max_retries=3, delay=10),
+    tags={"kind": "extract"}
+)
+def get_assignments(context, course_id: int) -> List:
+    records = context.resources.canvas_api_client.get_assignments(course_id)
+    yield Output(
+        value={
+            "folder_name": "assignments",
+            "value": records
+        },
+        metadata={
+            "record_count": len(records)
+        }
+    )
 
 
 @op(

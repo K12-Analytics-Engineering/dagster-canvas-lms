@@ -17,27 +17,57 @@ class CanvasApiClient:
 
 
     @retry(wait=wait_exponential(multiplier=1, min=4, max=10))
-    def _call_api(self, url):
+    def _call_api(self, url: str, paginate: bool):
         """
         Call GET on passed in URL and
         return response.
         """
         headers={"Authorization" : f"Bearer {self.api_access_token}"}
         self.log.debug(url)
-        try:
-            response = requests.get(url, headers=headers)
-            response.raise_for_status()
-        except requests.exceptions.HTTPError as err:
-            self.log.warn("Failed to retrieve data")
-            # a 404 will be returned if an assignment is deleted
-            # after fetching the assignment ids and before fetching
-            # submissions
-            if response.status_code == 404:
-                self.log.debug(response.text)
+        done = False
+        records = list()
+        while not done:
+            try:
+                response = requests.get(url, headers=headers)
+                response.raise_for_status()
+            except requests.exceptions.HTTPError as err:
+                self.log.warn("Failed to retrieve data")
+                # a 404 will be returned if an assignment is deleted
+                # after fetching the assignment ids and before fetching
+                # submissions
+                if response.status_code == 404:
+                    self.log.debug(response.text)
+                else:
+                    raise err
+            
+            self.log.info(f"Retrieved {len(response.json())} records")
+            if paginate:
+                records = records + response.json()
             else:
-                raise err
+                return response.json()
+
+            self.log.debug(response.links)
+            if "next" in response.links and response.links["current"]["url"] != response.links["next"]["url"]:
+                url = response.links["next"]["url"]
+            elif "last" in response.links and response.links["current"]["url"] != response.links["last"]["url"]:
+                url = response.links["last"]["url"]
+            else:
+                done = True
         
-        return response
+        return records
+
+
+    def get_assignments(self, course_id: int) -> List:
+        """
+        Get assignment data from Canvas API
+        and return JSON
+        """
+        endpoint_url = (
+            f"{self.api_base_url}"
+            f"/api/v1/courses/{course_id}"
+            "/assignments?page=1&per_page=100"
+        )
+        return self._call_api(endpoint_url, True)
 
 
     def get_courses(self, term_id: int) -> List:
@@ -54,22 +84,7 @@ class CanvasApiClient:
             "&include[]=total_students"
             "&include[]=teachers"
         )
-        done = False
-        records = list()
-        while not done:
-            response = self._call_api(endpoint_url)
-            self.log.info(f"Retrieved {len(response.json())} records")
-            records = records + response.json()
-
-            self.log.debug(response.links)
-            if "next" in response.links and response.links["current"]["url"] != response.links["next"]["url"]:
-                endpoint_url = response.links["next"]["url"]
-            elif "last" in response.links and response.links["current"]["url"] != response.links["last"]["url"]:
-                endpoint_url = response.links["last"]["url"]
-            else:
-                done = True
-        
-        return records
+        return self._call_api(endpoint_url, True)
 
 
     def get_terms(self) -> List:
@@ -81,8 +96,8 @@ class CanvasApiClient:
             f"{self.api_base_url}"
             f"/api/v1/accounts/{self.account_id}/terms?page=1&per_page=100"
         )
-        response = self._call_api(endpoint_url)
-        terms = response.json()["enrollment_terms"]
+        response = self._call_api(endpoint_url, False)
+        terms = response["enrollment_terms"]
         self.log.info(f"Retrieved {len(terms)} records")
         return terms
 
