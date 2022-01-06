@@ -1,9 +1,9 @@
 from dagster import repository
 
-from jobs.hello_dagster import hello_dagster_job
+from jobs.canvas import canvas_dev_job
 
 @repository
 def repository():
     return [
-        hello_dagster_job
+        canvas_dev_job
     ]
