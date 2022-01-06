@@ -11,48 +11,6 @@ from google.cloud import bigquery
     description="Yields dynamic outputs containing each course id",
     out=DynamicOut(int)
 )
-def assignment_id_generator(context, assignments: List[Dict]) -> Dict:
-    """
-    Dynamically output each assignment to allow
-    for related submission data to be
-    extracted in parallel. Output is a dict
-    specifying the assignment type (quiz or assignment)
-    and the assignment id.
-
-    Args:
-        assignments List[Dict]:
-            assignments is a list of the assignments fetched for
-            each Canvas course. Each list item is a dict
-            containing a value key that holds the actual
-            records retrieved.
-
-            ie. [{"folder_name": "assignments", "value": List of records},
-                 {"folder_name": "assignments", "value": List of records}]
-    """
-    for assignment_list in assignments:
-        for assignment in assignment_list["value"]:
-            id = str(assignment["id"])
-            if assignment["is_quiz_assignment"] is True:
-                value={
-                    "assignment_type": "quiz",
-                     "assignment_id": id
-                }
-            else:
-                value={
-                    "assignment_type": "assignment",
-                     "assignment_id": id
-                }
-
-            yield DynamicOutput(
-                value=value,
-                mapping_key=id
-            )
-
-
-@op(
-    description="Yields dynamic outputs containing each course id",
-    out=DynamicOut(int)
-)
 def course_id_generator(context, courses: List[Dict]) -> List:
     """
     Dynamically output each course id to allow
