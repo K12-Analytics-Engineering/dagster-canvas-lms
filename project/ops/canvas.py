@@ -231,11 +231,12 @@ def get_submissions(context, assignments: Dict) -> List:
     course_id = assignments["course_id"]
     for assignment in assignments["value"]:
         if assignment["is_quiz_assignment"] is True:
-            records = records + context.resources.canvas_api_client.get_submissions(
+            quizzes = context.resources.canvas_api_client.get_submissions(
                 course_id=course_id,
                 assignment_id=str(assignment["quiz_id"]),
                 assignment_type="quiz"
             )
+            records = records + quizzes["quiz_submissions"]
         else:
             records = records + context.resources.canvas_api_client.get_submissions(
                 course_id=course_id,
