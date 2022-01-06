@@ -4,9 +4,10 @@ from dagster import fs_io_manager, graph, multiprocess_executor
 from dagster_dbt import dbt_cli_resource
 from dagster_gcp.gcs.io_manager import gcs_pickle_io_manager
 from dagster_gcp.gcs.resources import gcs_resource
-from ops.canvas import (course_id_generator, create_warehouse_tables,
-                        get_assignments, get_courses, get_terms, load_data,
-                        term_id_generator)
+from ops.canvas import (assignment_id_generator, course_id_generator,
+                        create_warehouse_tables, get_assignments, get_courses,
+                        get_enrollments, get_sections, get_submissions,
+                        get_terms, load_data, term_id_generator)
 from resources.bq_resource import bq_client
 from resources.canvas_api_resource import canvas_api_resource_client
 from resources.gcs_resource import gcs_client
@@ -32,8 +33,19 @@ def canvas():
 
     course_ids = course_id_generator(courses)
 
-    assignments = course_ids.map(get_assignments).collect()
-    assignments_gcs_path = load_data.alias("load_assignments")(assignments)
+    # enrollments = course_ids.map(get_enrollments).collect()
+    # enrollments_gcs_path = load_data.alias("load_enrollments")(enrollments)
+
+    # sections = course_ids.map(get_sections).collect()
+    # sections_gcs_path = load_data.alias("load_sections")(sections)
+
+    assignments = course_ids.map(get_assignments)
+    assignments_gcs_path = load_data.alias("load_assignments")(assignments.collect())
+    submissions = assignments.map(get_submissions).collect()
+    submissions_gcs_path = load_data.alias("load_submissions")(submissions)
+
+    # assignment_ids = assignment_id_generator(assignments)
+    
 
 
 canvas_dev_job = canvas.to_job(

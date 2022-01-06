@@ -11,7 +11,64 @@ from google.cloud import bigquery
     description="Yields dynamic outputs containing each course id",
     out=DynamicOut(int)
 )
+def assignment_id_generator(context, assignments: List[Dict]) -> Dict:
+    """
+    Dynamically output each assignment to allow
+    for related submission data to be
+    extracted in parallel. Output is a dict
+    specifying the assignment type (quiz or assignment)
+    and the assignment id.
+
+    Args:
+        assignments List[Dict]:
+            assignments is a list of the assignments fetched for
+            each Canvas course. Each list item is a dict
+            containing a value key that holds the actual
+            records retrieved.
+
+            ie. [{"folder_name": "assignments", "value": List of records},
+                 {"folder_name": "assignments", "value": List of records}]
+    """
+    for assignment_list in assignments:
+        for assignment in assignment_list["value"]:
+            id = str(assignment["id"])
+            if assignment["is_quiz_assignment"] is True:
+                value={
+                    "assignment_type": "quiz",
+                     "assignment_id": id
+                }
+            else:
+                value={
+                    "assignment_type": "assignment",
+                     "assignment_id": id
+                }
+
+            yield DynamicOutput(
+                value=value,
+                mapping_key=id
+            )
+
+
+@op(
+    description="Yields dynamic outputs containing each course id",
+    out=DynamicOut(int)
+)
 def course_id_generator(context, courses: List[Dict]) -> List:
+    """
+    Dynamically output each course id to allow
+    for downstream course related data to be
+    extracted in parallel.
+
+    Args:
+        courses List[Dict]:
+            courses is a list of the courses fetched for
+            each Canvas term. Each list item is a dict
+            containing a value key that holds the actual
+            records retrieved.
+
+            ie. [{"folder_name": "courses", "value": List of records},
+                 {"folder_name": "courses", "value": List of records}]
+    """
     for course_list in courses:
         for course in course_list["value"]:
             id = course["id"]
@@ -40,6 +97,9 @@ def create_warehouse_tables(context):
     tables = [
         {"folder_name": "assignments", "table_name": "canvas_assignments"},
         {"folder_name": "courses", "table_name": "canvas_courses"},
+        {"folder_name": "enrollments", "table_name": "canvas_enrollments"},
+        {"folder_name": "sections", "table_name": "canvas_sections"},
+        {"folder_name": "submissions", "table_name": "canvas_submissions"},
         {"folder_name": "terms", "table_name": "canvas_terms"}
     ]
     for table in tables:
@@ -61,9 +121,13 @@ def create_warehouse_tables(context):
     tags={"kind": "extract"}
 )
 def get_assignments(context, course_id: int) -> List:
+    """
+    Retrieve all assignments for a specific course
+    """
     records = context.resources.canvas_api_client.get_assignments(course_id)
     yield Output(
         value={
+            "course_id": str(course_id),
             "folder_name": "assignments",
             "value": records
         },
@@ -80,10 +144,107 @@ def get_assignments(context, course_id: int) -> List:
     tags={"kind": "extract"}
 )
 def get_courses(context, term_id: int) -> List:
+    """
+    Retrieve all courses for a specific term
+    """
     records = context.resources.canvas_api_client.get_courses(term_id)
     yield Output(
         value={
             "folder_name": "courses",
+            "value": records
+        },
+        metadata={
+            "record_count": len(records)
+        }
+    )
+
+
+@op(
+    description="Retrieves all enrollments for a specific course",
+    required_resource_keys={"canvas_api_client"},
+    retry_policy=RetryPolicy(max_retries=3, delay=10),
+    tags={"kind": "extract"}
+)
+def get_enrollments(context, course_id: int) -> List:
+    """
+    Retrieve all enrollments for a specific course
+    """
+    records = context.resources.canvas_api_client.get_enrollments(course_id)
+    yield Output(
+        value={
+            "folder_name": "enrollments",
+            "value": records
+        },
+        metadata={
+            "record_count": len(records)
+        }
+    )
+
+
+@op(
+    description="Retrieves all sections for a specific course",
+    required_resource_keys={"canvas_api_client"},
+    retry_policy=RetryPolicy(max_retries=3, delay=10),
+    tags={"kind": "extract"}
+)
+def get_sections(context, course_id: int) -> List:
+    """
+    Retrieve all sections for a specific course
+    """
+    records = context.resources.canvas_api_client.get_sections(course_id)
+    yield Output(
+        value={
+            "folder_name": "sections",
+            "value": records
+        },
+        metadata={
+            "record_count": len(records)
+        }
+    )
+
+
+@op(
+    description="Retrieves all assignment and quiz submissions",
+    required_resource_keys={"canvas_api_client"},
+    retry_policy=RetryPolicy(max_retries=3, delay=10),
+    tags={"kind": "extract"}
+)
+def get_submissions(context, assignments: List[Dict]) -> List:
+    """
+    Loop through all assignments in a course,
+    fetching their submissions, and return
+    a list containing all submissions for that course.
+
+    Args:
+        assignments List[Dict]:
+            assignments is a list of the assignments fetched for
+            each Canvas course. Each list item is a dict
+            containing a value key that holds the actual
+            records retrieved.
+
+            ie. [{
+                "course_id: id of course assignments pertain to,
+                "folder_name": "assignments",
+                "value": List of records}]
+    """
+    records = list()
+    for assignment_list in assignments:
+        course_id = assignment_list["course_id"]
+        for assignment in assignment_list["value"]:
+            if assignment["is_quiz_assignment"] is True:
+                assignment_type = "quiz"
+            else:
+                assignment_type = "assignment"
+        
+            records = records + context.resources.canvas_api_client.get_submissions(
+                course_id=course_id,
+                assignment_id=str(assignment["id"]),
+                assignment_type=assignment_type
+            )
+
+    yield Output(
+        value={
+            "folder_name": "submissions",
             "value": records
         },
         metadata={

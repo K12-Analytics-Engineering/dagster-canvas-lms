@@ -87,6 +87,58 @@ class CanvasApiClient:
         return self._call_api(endpoint_url, True)
 
 
+    def get_enrollments(self, course_id: int) -> List:
+        """
+        Get enrollment data from Canvas API
+        and return JSON
+        """
+        endpoint_url = (
+            f"{self.api_base_url}"
+            f"/api/v1/courses/{course_id}"
+            "/enrollments?page=1&per_page=100"
+            "&include=current_points"
+        )
+        return self._call_api(endpoint_url, True)
+
+
+    def get_sections(self, course_id: int) -> List:
+        """
+        Get section data from Canvas API
+        and return JSON
+        """
+        endpoint_url = (
+            f"{self.api_base_url}"
+            f"/api/v1/courses/{course_id}"
+            "/sections?page=1&per_page=100"
+            "&include=total_students"
+        )
+        return self._call_api(endpoint_url, True)
+
+
+    def get_submissions(self, course_id: str,
+        assignment_id: str, assignment_type: str) -> List:
+        """
+        Get submission data from Canvas API
+        and return JSON
+        """
+        if assignment_type == "assignment":
+            endpoint_url = (
+                f"{self.api_base_url}"
+                f"/api/v1/courses/{course_id}"
+                f"/assignments/{assignment_id}/submissions"
+                "?page=1&per_page=100"
+            )
+        else:
+            endpoint_url = (
+                f"{self.api_base_url}"
+                f"/api/v1/courses/{course_id}"
+                f"/quizzes/{assignment_id}/submissions"
+                "?page=1&per_page=100"
+            )
+
+        return self._call_api(endpoint_url, True)
+
+
     def get_terms(self) -> List:
         """
         Get terms data from Canvas API
