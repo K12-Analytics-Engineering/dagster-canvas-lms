@@ -1,5 +1,4 @@
 
-
 SELECT
     CAST(JSON_EXTRACT_SCALAR(data, '$.id') AS int64) AS id,
     CAST(JSON_EXTRACT_SCALAR(data, '$.assignment_id') AS int64) AS assignment_id,
@@ -18,4 +17,4 @@ SELECT
     CAST(JSON_EXTRACT_SCALAR(data, '$.late') AS BOOL) AS late,
     CAST(JSON_EXTRACT_SCALAR(data, '$.missing') AS BOOL) AS missing,
     JSON_EXTRACT_SCALAR(data, '$.workflow_state') AS workflow_state
-FROM {{ source('raw_sources', 'canvas_submissions') }} 
+FROM {{ source('raw_sources', 'canvas_submissions') }}

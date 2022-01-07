@@ -4,6 +4,7 @@ version: 2
 
 models:
   - name: assignments
+    description: "This assumes that the SIS has a globally-unique identifier. Canvas sections are matched to SIS sections based on the Canvas field sis_section_id"
     config:
       schema: staging
       materialized: table

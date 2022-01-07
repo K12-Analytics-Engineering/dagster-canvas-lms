@@ -13,6 +13,11 @@ models:
       schema: staging
       materialized: table
 
+  - name: stg_canvas_sections
+    config:
+      schema: staging
+      materialized: table
+
   - name: stg_canvas_submissions
     config:
       schema: staging

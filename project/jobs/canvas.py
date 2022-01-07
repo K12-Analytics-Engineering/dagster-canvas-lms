@@ -17,8 +17,8 @@ from resources.gcs_resource import gcs_client
     name="canvas",
     description=(
         "Gets data from the Canvas API and"
-        "loads to BigQuery. Runs dbt models "
-        "after data is loaded."
+        "loads to Google Cloud Storage. Runs dbt models "
+        "to create student equity AMT tables in BigQuery."
     )
 )
 def canvas():
