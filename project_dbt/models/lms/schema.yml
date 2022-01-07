@@ -1,0 +1,9 @@
+
+version: 2
+
+
+models:
+  - name: assignments
+    config:
+      schema: staging
+      materialized: table
