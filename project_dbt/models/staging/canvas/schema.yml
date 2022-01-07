@@ -1,0 +1,24 @@
+
+version: 2
+
+
+models:
+  - name: stg_canvas_assignments
+    config:
+      schema: staging
+      materialized: table
+
+  - name: stg_canvas_courses
+    config:
+      schema: staging
+      materialized: table
+
+  - name: stg_canvas_submissions
+    config:
+      schema: staging
+      materialized: table
+
+  - name: stg_canvas_terms
+    config:
+      schema: staging
+      materialized: table

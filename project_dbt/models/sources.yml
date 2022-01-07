@@ -1,0 +1,15 @@
+version: 2
+
+sources:
+    - name: raw_sources
+      schema: |
+        {%- if  target.name == "dev" -%} dev_raw_sources
+        {%- else -%} prod_raw_sources
+        {%- endif -%}
+      tables:
+        - name: canvas_assignments
+        - name: canvas_courses
+        - name: canvas_enrollments
+        - name: canvas_sections
+        - name: canvas_submissions
+        - name: canvas_terms

@@ -41,6 +41,7 @@ def canvas():
 
     assignments = course_ids.map(get_assignments)
     assignments_gcs_path = load_data.alias("load_assignments")(assignments.collect())
+
     submissions = assignments.map(get_submissions).collect()
     submissions_gcs_path = load_data.alias("load_submissions")(submissions)
 

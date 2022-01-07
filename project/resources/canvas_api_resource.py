@@ -116,7 +116,7 @@ class CanvasApiClient:
 
 
     def get_submissions(self, course_id: str,
-        assignment_id: str, assignment_type: str) -> List:
+        assignment_id: str, assignment_type: str, pagination=True) -> List:
         """
         Get submission data from Canvas API
         and return JSON
@@ -136,7 +136,7 @@ class CanvasApiClient:
                 "?page=1&per_page=100"
             )
 
-        return self._call_api(endpoint_url, True)
+        return self._call_api(endpoint_url, pagination)
 
 
     def get_terms(self) -> List:

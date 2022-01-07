@@ -3,7 +3,7 @@ project_dbt:
     dev:
       dataset: dev
       fixed_retries: 1
-      keyfile: /workspaces/dagster-template/service.json
+      keyfile: /workspaces/dagster-canvas-lms/service.json
       location: US
       method: service-account
       priority: interactive

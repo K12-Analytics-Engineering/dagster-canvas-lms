@@ -192,14 +192,16 @@ def get_submissions(context, assignments: Dict) -> List:
             quizzes = context.resources.canvas_api_client.get_submissions(
                 course_id=course_id,
                 assignment_id=str(assignment["quiz_id"]),
-                assignment_type="quiz"
+                assignment_type="quiz",
+                pagination=False
             )
             records = records + quizzes["quiz_submissions"]
         else:
             records = records + context.resources.canvas_api_client.get_submissions(
                 course_id=course_id,
                 assignment_id=str(assignment["id"]),
-                assignment_type="assignment"
+                assignment_type="assignment",
+                pagination=True
             )
 
     yield Output(
