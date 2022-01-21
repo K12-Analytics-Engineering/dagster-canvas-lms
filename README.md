@@ -1,5 +1,5 @@
 # Dagster Canvas LMS API to Ed-Fi AMT
-This repository contains code that extracts Canvas assignment submission data from the Canvas API to create the Assignment and Assignment Submission tables found in Ed-Fi's Analytics Middle Tier. Between the Canvas data models and AMT, this repo also creates the Ed-Fi LMS Assignment and Assignment Submission data models to be future ready for the upcoming Ed-Fi LMS API.
+This repository contains code that extracts Canvas assignment submission data from the Canvas API to create the Assignment and Assignment Submission facts found in Ed-Fi's Analytics Middle Tier. Between the Canvas data models and AMT, this repo also creates the Ed-Fi LMS Assignment and Assignment Submission data models to be future ready for the upcoming Ed-Fi LMS API.
 
 > :warning: **Caution:** This repo is fully built out to extract Canvas data to Google Cloud Storage and create staging tables in BigQuery. The Canvas to AMT SQL is not complete. If you use an Ed-Fi certified SIS and Canvas, please reach out and I would be happy to complete and deploy the codebase for you.
 
