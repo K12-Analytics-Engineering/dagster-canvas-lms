@@ -63,7 +63,7 @@ canvas_dev_job = canvas.to_job(
             "account_id": "1"
         }),
         "warehouse": bq_client.configured({
-            "dataset": "dev_raw_sources",
+            "dataset": "dev_staging",
         }),
         "dbt": dbt_cli_resource.configured({
             "project_dir": os.getenv('DBT_PROJECT_DIR'),
